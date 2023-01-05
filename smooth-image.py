@@ -1,13 +1,6 @@
 import imageio.v3 as iio
 import numpy as np
-# import matplotlib.pyplot as plt
-
-file = "triangles.png"
-file_blur = "triangles-blur.png"
-
-im = iio.imread(file).tolist()
-im_blur = iio.imread(file_blur).tolist()
-im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
+import sys
 
 def colour_dist(colour1: list[int], colour2: list[int]) -> int:
   dr = abs(colour1[0] - colour2[0]);
@@ -33,7 +26,6 @@ def avg_colour(row: int, col: int, cur_colour: list[int], colours: list[list[int
   if (n == 0): n = 1
   avg = [r_avg//n, g_avg//n, b_avg//n]
   return avg if (colour_dist(avg, cur_colour) <= threshold and d < threshold*n and n > area/1.3) else cur_colour
-  # return im_blur[row][col] if (colour_dist(avg, cur_colour) <= threshold and d < threshold*n and n > area/1.3) else cur_colour
 
 def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshold: int) -> list[int]:
   cur_colour = im[row][col]
@@ -49,25 +41,25 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
           colours.append(im[i][j]+[r**2+c**2]+[d])
   return avg_colour(row, col, cur_colour, colours)
 
+if __name__ == "__main__": 
+  if (len(sys.argv) < 4):
+    print("Usage: python smooth-image.py IMAGE(.png recommended) RADIUS THRESHOLD")
+    exit(1)
 
-radius = 2
-threshold = 40
-area = (radius * 2 + 1)**2
+  file = str(sys.argv[1])
+  radius = int(sys.argv[2])
+  threshold = int(sys.argv[3])
+  area = (radius * 2 + 1)**2
 
-for row in range(len(im)):
-  for col in range(len(im[0])):
-    # print("previous: ", im[row, col])
-    im_out[row, col] = smooth_colour(im, row, col, radius, threshold);
-    # print("average: ", im_out[row, col])
+  im = iio.imread(file).tolist()
+  im_blur = iio.imread(file_blur).tolist()
+  im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
 
+  for row in range(len(im)):
+    for col in range(len(im[0])):
+      # print("previous: ", im[row, col])
+      im_out[row, col] = smooth_colour(im, row, col, radius, threshold);
+      # print("average: ", im_out[row, col])
+    print("processing: {0:.3f}% {test}".format((row*100)/len(im), test='.'*((row*100)//len(im)+1)), end='\r')
 
-# fig, ax = plt.subplots()
-# plt.imshow(im)
-
-# plt.plot([1, 2, 3, 4], [1, 4, 9, 16], 'ro')
-# plt.axis([0, 6, 0, 20])
-# plt.show()
-
-iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
-
-
+  iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
