@@ -52,7 +52,6 @@ if __name__ == "__main__":
   area = (radius * 2 + 1)**2
 
   im = iio.imread(file).tolist()
-  im_blur = iio.imread(file_blur).tolist()
   im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
 
   for row in range(len(im)):
