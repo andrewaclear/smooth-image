@@ -11,8 +11,8 @@ python smooth-image.py IMAGE RADIUS THRESHOLD
 ```
 
 - IMAGE: image filename (path), supports png, jpg, and bmp but **png** is recommended
-- RADIUS: radius of pixels to smoothen
-- THRESHOLD: threshold of colour difference to smoothen
+- RADIUS: radius of pixels to smoothen (the greater, the softer the smoothening)
+- THRESHOLD: threshold of colour difference to smoothen (the higher, the more the image is blurred)
 
 **Output:** Image with the same filename-smooth and image type.
 
