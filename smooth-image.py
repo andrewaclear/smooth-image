@@ -32,7 +32,8 @@ def avg_colour(row: int, col: int, cur_colour: list[int], colours: list[list[int
     d += c[4]
   if (n == 0): n = 1
   avg = [r_avg//n, g_avg//n, b_avg//n]
-  return cur_colour if (colour_dist(avg, cur_colour) > threshold) else im_blur[row][col]
+  return avg if (colour_dist(avg, cur_colour) <= threshold and d < threshold*n and n > area/1.3) else cur_colour
+  # return im_blur[row][col] if (colour_dist(avg, cur_colour) <= threshold and d < threshold*n and n > area/1.3) else cur_colour
 
 def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshold: int) -> list[int]:
   cur_colour = im[row][col]
@@ -50,7 +51,8 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
 
 
 radius = 2
-threshold = 30
+threshold = 40
+area = (radius * 2 + 1)**2
 
 for row in range(len(im)):
   for col in range(len(im[0])):
