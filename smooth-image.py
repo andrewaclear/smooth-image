@@ -45,7 +45,7 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
           colours.append(im[i][j]+[r**2+c**2]+[d])
   return avg_colour(row, col, cur_colour, colours)
 
-def process_pixel(point):
+def process_pixel(point: tuple) -> tuple:
   return (point[0], point[1], smooth_colour(im, point[0], point[1], radius, threshold))
 
 if __name__ == "__main__": 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
       im_out[result[0], result[1]] = result[2]
       processed += 1
       dots = (((processed)*100)//(n)+1)
-      print("processing: [ {prog}{spaces} ] {0:.3f}%".format(((processed)*100)/n, prog='.'*dots, spaces=' '*(100-dots)), end='\r')
+      print("  processing: [ {prog}{spaces} ] {0:.3f}%".format(((processed)*100)/n, prog='.'*dots, spaces=' '*(100-dots+1)), end='\r')
 
     pool.close()
     pool.join()
@@ -85,5 +85,5 @@ if __name__ == "__main__":
   new_filename = file[:file.index('.')]+'-smooth'+file[file.index('.'):]
   iio.imwrite(uri=new_filename, image=im_out)
   
-  print(' '*126, end='\r')
+  print(' '*128, end='\r')
   print("Done {sec}s. Smooth image saved to: {file}".format(sec=(done-start).seconds, file=new_filename))
