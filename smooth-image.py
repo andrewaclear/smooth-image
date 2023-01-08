@@ -1,9 +1,10 @@
 import imageio.v3 as iio
 import numpy as np
 import sys
-import multiprocessing.pool
+from multiprocessing.pool import Pool
+from datetime import datetime
 
-THREADS = 8
+NUM_THREADS = 16
 
 def colour_dist(colour1: list[int], colour2: list[int]) -> int:
   dr = abs(colour1[0] - colour2[0]);
@@ -45,15 +46,7 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
   return avg_colour(row, col, cur_colour, colours)
 
 def process_pixel(point):
-  im_out[point[0], point[1]] = smooth_colour(im, point[0], point[1], radius, threshold);
-  # print("average: ", im_out[row, col])
-  print("processing: {0:.3f}% {test}".format(((point[0]*point[1])*100)/(len(im)*len(im[0])), test='.'*(((point[0]*point[1])*100)//(len(im)*len(im[0]))+1)), end='\r')
-
-def process_row(row):
-  with multiprocessing.pool.ThreadPool(THREADS) as col_pool:
-    col_pool.imap_unordered(process_pixel, ((row, i) for i in range(len(im[0]))))
-    col_pool.close()
-    col_pool.join()
+  return (point[0], point[1], smooth_colour(im, point[0], point[1], radius, threshold))
 
 if __name__ == "__main__": 
   if (len(sys.argv) < 4):
@@ -68,10 +61,29 @@ if __name__ == "__main__":
   im = iio.imread(file).tolist()
   im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
 
-  with multiprocessing.pool.ThreadPool(THREADS) as row_pool:
-    # print("previous: ", im[row, col])
-    row_pool.imap_unordered(process_row, range(len(im)))
-    row_pool.close()
-    row_pool.join()
+  rows = []
+  for i in range(len(im)):
+    rows+=[i]*len(im[0])
+  
+  processed = 0
+  n = (len(im)*len(im[0]))
 
-  iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
+  start = datetime.now()
+
+  with Pool(NUM_THREADS) as pool:
+    # print("previous: ", im[row, col])
+    for result in pool.imap_unordered(process_pixel, tuple(zip(rows,[j for j in range(len(im[0]))]*len(im)))):
+      im_out[result[0], result[1]] = result[2]
+      processed += 1
+      dots = (((processed)*100)//(n)+1)
+      print("processing: [ {prog}{spaces} ] {0:.3f}%".format(((processed)*100)/n, prog='.'*dots, spaces=' '*(100-dots)), end='\r')
+
+    pool.close()
+    pool.join()
+
+  done = datetime.now()
+  new_filename = file[:file.index('.')]+'-smooth'+file[file.index('.'):]
+  iio.imwrite(uri=new_filename, image=im_out)
+  
+  print(' '*126, end='\r')
+  print("Done {sec}s. Smooth image saved to: {file}".format(sec=(done-start).seconds, file=new_filename))
