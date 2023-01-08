@@ -51,7 +51,9 @@ def process_pixel(point):
 
 def process_row(row):
   with multiprocessing.pool.ThreadPool(THREADS) as col_pool:
-    col_pool.map(process_pixel, ((row, i) for i in range(len(im[0]))))
+    col_pool.imap_unordered(process_pixel, ((row, i) for i in range(len(im[0]))))
+    col_pool.close()
+    col_pool.join()
 
 if __name__ == "__main__": 
   if (len(sys.argv) < 4):
@@ -68,6 +70,8 @@ if __name__ == "__main__":
 
   with multiprocessing.pool.ThreadPool(THREADS) as row_pool:
     # print("previous: ", im[row, col])
-    row_pool.map(process_row, range(len(im)))
+    row_pool.imap_unordered(process_row, range(len(im)))
+    row_pool.close()
+    row_pool.join()
 
   iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
