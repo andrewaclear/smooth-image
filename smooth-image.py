@@ -71,7 +71,6 @@ if __name__ == "__main__":
   start = datetime.now()
 
   with Pool(NUM_THREADS) as pool:
-    # print("previous: ", im[row, col])
     for result in pool.imap_unordered(process_pixel, tuple(zip(rows,[j for j in range(len(im[0]))]*len(im)))):
       im_out[result[0], result[1]] = result[2]
       processed += 1
