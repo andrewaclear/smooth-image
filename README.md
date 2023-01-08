@@ -38,7 +38,7 @@ python smooth-image.py media/triangles.png 2 80
 
 **Command:**
 ```shell
-python smooth-image.py media/triangles-full.png 10 80
+python smooth-image.py media/triangles-full.png 20 80
 ```
 **Smoothened image:**
 

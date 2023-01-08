@@ -1,6 +1,10 @@
 import imageio.v3 as iio
 import numpy as np
 import sys
+from multiprocessing.pool import Pool
+from datetime import datetime
+
+NUM_THREADS = 16
 
 def colour_dist(colour1: list[int], colour2: list[int]) -> int:
   dr = abs(colour1[0] - colour2[0]);
@@ -41,6 +45,9 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
           colours.append(im[i][j]+[r**2+c**2]+[d])
   return avg_colour(row, col, cur_colour, colours)
 
+def process_pixel(point: tuple) -> tuple:
+  return (point[0], point[1], smooth_colour(im, point[0], point[1], radius, threshold))
+
 if __name__ == "__main__": 
   if (len(sys.argv) < 4):
     print("Usage: python smooth-image.py IMAGE(.png recommended) RADIUS THRESHOLD")
@@ -54,11 +61,29 @@ if __name__ == "__main__":
   im = iio.imread(file).tolist()
   im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
 
-  for row in range(len(im)):
-    for col in range(len(im[0])):
-      # print("previous: ", im[row, col])
-      im_out[row, col] = smooth_colour(im, row, col, radius, threshold);
-      # print("average: ", im_out[row, col])
-    print("processing: {0:.3f}% {test}".format((row*100)/len(im), test='.'*((row*100)//len(im)+1)), end='\r')
+  rows = []
+  for i in range(len(im)):
+    rows+=[i]*len(im[0])
+  
+  processed = 0
+  n = (len(im)*len(im[0]))
 
-  iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
+  start = datetime.now()
+
+  with Pool(NUM_THREADS) as pool:
+    # print("previous: ", im[row, col])
+    for result in pool.imap_unordered(process_pixel, tuple(zip(rows,[j for j in range(len(im[0]))]*len(im)))):
+      im_out[result[0], result[1]] = result[2]
+      processed += 1
+      dots = (((processed)*100)//(n)+1)
+      print("  processing: [ {prog}{spaces} ] {0:.3f}%".format(((processed)*100)/n, prog='.'*dots, spaces=' '*(100-dots+1)), end='\r')
+
+    pool.close()
+    pool.join()
+
+  done = datetime.now()
+  new_filename = file[:file.index('.')]+'-smooth'+file[file.index('.'):]
+  iio.imwrite(uri=new_filename, image=im_out)
+  
+  print(' '*128, end='\r')
+  print("Done {sec}s. Smooth image saved to: {file}".format(sec=(done-start).seconds, file=new_filename))
