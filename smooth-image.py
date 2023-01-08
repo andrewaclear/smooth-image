@@ -1,6 +1,9 @@
 import imageio.v3 as iio
 import numpy as np
 import sys
+import multiprocessing.pool
+
+THREADS = 8
 
 def colour_dist(colour1: list[int], colour2: list[int]) -> int:
   dr = abs(colour1[0] - colour2[0]);
@@ -41,6 +44,15 @@ def smooth_colour(im: list[list[int]], row: int, col: int, radius: int, threshol
           colours.append(im[i][j]+[r**2+c**2]+[d])
   return avg_colour(row, col, cur_colour, colours)
 
+def process_pixel(point):
+  im_out[point[0], point[1]] = smooth_colour(im, point[0], point[1], radius, threshold);
+  # print("average: ", im_out[row, col])
+  print("processing: {0:.3f}% {test}".format(((point[0]*point[1])*100)/(len(im)*len(im[0])), test='.'*(((point[0]*point[1])*100)//(len(im)*len(im[0]))+1)), end='\r')
+
+def process_row(row):
+  with multiprocessing.pool.ThreadPool(THREADS) as col_pool:
+    col_pool.map(process_pixel, ((row, i) for i in range(len(im[0]))))
+
 if __name__ == "__main__": 
   if (len(sys.argv) < 4):
     print("Usage: python smooth-image.py IMAGE(.png recommended) RADIUS THRESHOLD")
@@ -54,11 +66,8 @@ if __name__ == "__main__":
   im = iio.imread(file).tolist()
   im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
 
-  for row in range(len(im)):
-    for col in range(len(im[0])):
-      # print("previous: ", im[row, col])
-      im_out[row, col] = smooth_colour(im, row, col, radius, threshold);
-      # print("average: ", im_out[row, col])
-    print("processing: {0:.3f}% {test}".format((row*100)/len(im), test='.'*((row*100)//len(im)+1)), end='\r')
+  with multiprocessing.pool.ThreadPool(THREADS) as row_pool:
+    # print("previous: ", im[row, col])
+    row_pool.map(process_row, range(len(im)))
 
   iio.imwrite(uri=file[:file.index('.')]+'-smooth'+file[file.index('.'):], image=im_out)
