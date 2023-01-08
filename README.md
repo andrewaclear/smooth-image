@@ -2,7 +2,7 @@
 
 > by Andrew D'Amario © January 2023
 
-Image de-noising script to remove artifacts and smoothen images while preserving definition and quality.
+Multithreaded image enhancing script that removes artifacts and smoothens images while preserving definition and quality.
 
 ## Usage
 
