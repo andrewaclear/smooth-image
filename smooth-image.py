@@ -4,7 +4,7 @@ import sys
 from multiprocessing.pool import Pool
 from datetime import datetime
 
-NUM_THREADS = 16
+NUM_THREADS = 8
 
 def colour_dist(colour1: list[int], colour2: list[int]) -> int:
   dr = abs(colour1[0] - colour2[0]);
@@ -59,11 +59,13 @@ if __name__ == "__main__":
   area = (radius * 2 + 1)**2
 
   im = iio.imread(file).tolist()
-  im_out = np.zeros(shape=(len(im), len(im[0]), 3), dtype="uint8")
+  height = len(im)
+  width = len(im[0])
+  im_out = np.zeros(shape=(height, width, 3), dtype="uint8")
 
-  rows = []
-  for i in range(len(im)):
-    rows+=[i]*len(im[0])
+  rows = np.zeros(shape=(height*width, 2), dtype="int32")
+  for i in range(height*width):
+    rows[i] = (i//width, i%width)
   
   processed = 0
   n = (len(im)*len(im[0]))
@@ -71,8 +73,8 @@ if __name__ == "__main__":
   start = datetime.now()
 
   with Pool(NUM_THREADS) as pool:
-    for result in pool.imap_unordered(process_pixel, tuple(zip(rows,[j for j in range(len(im[0]))]*len(im)))):
-      im_out[result[0], result[1]] = result[2]
+    for result in pool.imap_unordered(process_pixel, rows):
+      im_out[result[0]][result[1]] = result[2]
       processed += 1
       dots = (((processed)*100)//(n)+1)
       print("  processing: [ {prog}{spaces} ] {0:.3f}%".format(((processed)*100)/n, prog='.'*dots, spaces=' '*(100-dots+1)), end='\r')
